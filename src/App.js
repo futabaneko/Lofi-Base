@@ -3,6 +3,8 @@ import Login from "./Login";
 import ProfileSetup from "./ProfileSetup";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import Loading from "./loading";
+import Header from "./Header";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -31,25 +33,36 @@ function App() {
   }, [user]);
 
   if (!user) {
-    return <Login onLogin={setUser} />;
-  }
-
-  if (checkingProfile) {
     return (
-      <div className="container d-flex justify-content-center align-items-center vh-100">
-        <div className="text-center">
-          <div className="spinner-border text-primary" role="status"></div>
-          <p className="mt-3">プロフィール確認中...</p>
-        </div>
+      <div class="page">
+        <Header user={user} profile={profile} />
+        <Login onLogin={setUser} />
       </div>
     );
   }
 
+  if (checkingProfile) {
+    return (
+      <div class="page">
+        <Header user={user} profile={profile} />
+        <Loading />
+      </div>
+    )
+  };
+
   if (!profile) {
-    return <ProfileSetup user={user} onSubmit={setProfile} />;
+    return (
+      <div class="page">
+        <Header user={user} profile={profile} />
+        <ProfileSetup user={user} onSubmit={setProfile} />
+      </div>
+    );
   }
 
   return (
+
+  <div class="page">
+    <Header user={user} profile={profile} />
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card shadow p-4" style={{ maxWidth: "400px", width: "100%" }}>
         <div className="text-center">
@@ -60,11 +73,12 @@ function App() {
             width="80"
             height="80"
           />
-          <h4 className="card-title">ようこそ、{profile.nickname} さん！</h4>
-          <p className="text-muted">ID: {profile.userID}</p>
+          <h4 className="card-title">ようこそ、{profile.userName} さん！</h4>
+          <p className="text-muted">@{profile.userID}</p>
         </div>
       </div>
     </div>
+  </div>
   );
 }
 

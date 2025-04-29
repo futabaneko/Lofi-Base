@@ -4,12 +4,11 @@ import { collection, onSnapshot, query, orderBy, getDoc, doc, updateDoc, setDoc,
 import { useNavigate, Link } from 'react-router-dom';
 import UserCard from './UserCard';
 
-function RoomList() {
+function RoomList({ user }) {
   const [rooms, setRooms] = useState([]);
   const [hoveredRoomID, setHoveredRoomID] = useState(null);
   const [userIDs, setUserIDs] = useState({}); // userIDを管理するためのstate
   const navigate = useNavigate();
-  const user = {}; // ログイン情報など管理
 
   useEffect(() => {
     const q = query(collection(db, 'rooms'), orderBy('createdAt', 'desc'));
@@ -45,37 +44,37 @@ function RoomList() {
   const handleEnterRoom = async (roomId) => {
     try {
       const roomRef = doc(db, 'rooms', roomId);
-
-      // 部屋の参加人数を確認
       const roomDoc = await getDoc(roomRef);
       const nowMembers = roomDoc.data().nowMembers;
-
-      // 最大人数に達していないかチェック
+  
       if (nowMembers < roomDoc.data().maxMembers) {
-
-        // 部屋にユーザーIDを追加（参加者リスト）
         await updateDoc(roomRef, {
-          nowMembers: nowMembers + 1, // 参加人数を増加
+          nowMembers: nowMembers + 1,
+        });
+  
+        // メンバー情報をサブコレクションに登録
+        await setDoc(doc(db, 'rooms', roomId, 'members', user.uid), {
+          isInRoom: true,
+          isWorking: false,
+          totalStudyTime: 0,
+          currentTask: "",
+          joinedAt: serverTimestamp(),
         });
 
-        // サブコレクションに参加者として自分を追加
-        await setDoc(doc(db, 'rooms', roomRef.id, 'participants', user.uid), {
-            lastJoinedAt: serverTimestamp(),
-            totalTime: 0,
-            isActive: true,
+        await updateDoc(doc(db, 'users', user.uid), {
+          currentRoomID: roomId
         });
-          
-        // 部屋画面に遷移
+  
         navigate(`/rooms/${roomId}`);
-
       } else {
         alert('この部屋は満員です。');
+        
       }
-
     } catch (error) {
       console.error("部屋に参加できません:", error);
     }
   };
+  
 
   return (
     <div className="container py-4">

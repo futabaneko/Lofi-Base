@@ -6,8 +6,9 @@ import { db } from "./firebase";
 export default function ProfileSetup({ user, onSubmit }) {
   const [userName, setUserName] = useState("");
   const [userID, setUserId] = useState("");
-  const [errors, setErrors] = useState({ userName: "", userID: "" });
-  const [touched, setTouched] = useState({ userName: false, userID: false });
+  const [tags, setTags] = useState(""); // タグの状態を管理
+  const [errors, setErrors] = useState({ userName: "", userID: "", tags: "" });
+  const [touched, setTouched] = useState({ userName: false, userID: false, tags: false });
 
   const validate = (name, value) => {
     if (name === "userName") {
@@ -17,6 +18,8 @@ export default function ProfileSetup({ user, onSubmit }) {
       if (!value) return "IDを入力してください。";
       if (!/^[a-zA-Z0-9_]{1,16}$/.test(value))
         return "IDは英数字と_のみ使用可能で、16文字以内です。";
+    } else if (name === "tags") {
+      if (value.split(',').length > 5) return "タグは最大5個まで入力できます。";
     }
     return "";
   };
@@ -25,6 +28,7 @@ export default function ProfileSetup({ user, onSubmit }) {
     const { name, value } = e.target;
     if (name === "userName") setUserName(value);
     if (name === "userID") setUserId(value);
+    if (name === "tags") setTags(value);
 
     setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
@@ -39,9 +43,11 @@ export default function ProfileSetup({ user, onSubmit }) {
   
     const userNameError = validate("userName", userName);
     const userIdError = validate("userID", userID);
-    if (userNameError || userIdError) {
-      setErrors({ userName: userNameError, userID: userIdError });
-      setTouched({ userName: true, userID: true });
+    const tagsError = validate("tags", tags);
+
+    if (userNameError || userIdError || tagsError) {
+      setErrors({ userName: userNameError, userID: userIdError, tags: tagsError });
+      setTouched({ userName: true, userID: true, tags: true });
       return;
     }
   
@@ -66,16 +72,19 @@ export default function ProfileSetup({ user, onSubmit }) {
         return;
       }
   
+      // タグを配列に変換
+      const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+
       // 保存処理
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, {
         userName,
         userID: userID,
         photoURL: user.photoURL ?? null,
+        tags: tagArray,  // タグを保存
         createdAt: serverTimestamp(),
       });
-      onSubmit({ ...user, userName, userID });
-
+      onSubmit({ ...user, userName, userID, tags: tagArray });
     } catch (error) {
       console.error("Firestoreへの保存エラー:", error.code, error.message);
       alert("保存中にエラーが発生しました: " + error.message);
@@ -120,6 +129,20 @@ export default function ProfileSetup({ user, onSubmit }) {
           />
           {touched.userID && errors.userID && (
             <div className="invalid-feedback">{errors.userID}</div>
+          )}
+        </div>
+        <div className="mb-3">
+          <label className="form-label">タグ</label>
+          <input
+            className={`form-control ${touched.tags && errors.tags ? "is-invalid" : ""}`}
+            name="tags"
+            value={tags}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="タグをカンマ区切りで入力"
+          />
+          {touched.tags && errors.tags && (
+            <div className="invalid-feedback">{errors.tags}</div>
           )}
         </div>
         <button className="btn btn-success" type="submit">

@@ -1,16 +1,40 @@
 import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { doc, getDoc } from "firebase/firestore";
+import { db, auth } from "./firebase";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import Login from "./Login";
 import ProfileSetup from "./ProfileSetup";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
-import Loading from "./loading";
+import Loading from "./Loading";
 import Header from "./Header";
+import RoomList from "./RoomList";
+import CreateRoom from "./CreateRoom";
+import Room from "./Room";
 
 function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [checkingProfile, setCheckingProfile] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
+  // ログイン
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthChecked(true);
+    });
+
+    return () => unsubscribe(); 
+  }, []);
+
+  // ログアウト
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUser(null);
+    setProfile(null);
+  };
+
+  // プロフィールの取得
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
@@ -32,53 +56,68 @@ function App() {
     fetchProfile();
   }, [user]);
 
-  if (!user) {
-    return (
-      <div class="page">
-        <Header user={user} profile={profile} />
-        <Login onLogin={setUser} />
-      </div>
-    );
+  // ログイン状態の取得待ち
+  if (!authChecked) {
+    <Router>
+    <div className="page">
+      <Header user={user} profile={profile} onLogout={handleLogout} />
+      <Loading text="ログイン状態を取得中..." />;
+    </div>
+  </Router>
   }
 
+  // ユーザー情報の取得待ち
   if (checkingProfile) {
     return (
-      <div class="page">
-        <Header user={user} profile={profile} />
-        <Loading />
-      </div>
-    )
-  };
-
-  if (!profile) {
-    return (
-      <div class="page">
-        <Header user={user} profile={profile} />
-        <ProfileSetup user={user} onSubmit={setProfile} />
-      </div>
+      <Router>
+        <div className="page">
+          <Header user={user} profile={profile} onLogout={handleLogout} />
+          <Loading text="ユーザー情報を取得中..." />
+        </div>
+      </Router>
     );
   }
 
-  return (
-
-  <div class="page">
-    <Header user={user} profile={profile} />
-    <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div className="card shadow p-4" style={{ maxWidth: "400px", width: "100%" }}>
-        <div className="text-center">
-          <img
-            src={profile.photoURL}
-            alt="avatar"
-            className="rounded-circle mb-3"
-            width="80"
-            height="80"
-          />
-          <h4 className="card-title">ようこそ、{profile.userName} さん！</h4>
-          <p className="text-muted">@{profile.userID}</p>
+  // ログインページ
+  if (!user) {
+    return (
+      <Router>
+        <div className="page">
+          <Header user={user} profile={profile} onLogout={handleLogout} />
+          <Routes>
+            <Route path="/" element={<Login onLogin={setUser} />} />
+          </Routes>
         </div>
+      </Router>
+    );
+  }
+
+  // プロフィール初期設定ページ
+  if (!profile) {
+    return (
+      <Router>
+        <div className="page">
+          <Header user={user} profile={profile} onLogout={handleLogout} />
+          <Routes>
+            <Route path="/" element={<ProfileSetup user={user} onSubmit={setProfile} />} />
+          </Routes>
+        </div>
+      </Router>
+    );
+  }
+
+  // メインページ
+  return (
+    <Router>
+      <div className="page">
+        <Header user={user} profile={profile} onLogout={handleLogout} />
+        <Routes>
+          <Route path="/" element={<RoomList />}/> 
+          <Route path="/create-room" element={<CreateRoom user={user} />}/>
+          <Route path="/rooms/:id" component={<Room />} />
+        </Routes>
       </div>
-    </div>
-  </div>
+    </Router>
   );
 }
 

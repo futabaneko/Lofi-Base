@@ -2,8 +2,7 @@
 import React from 'react';
 import './App.css';
 
-function Header({ user, profile }) {
-    console.log(profile)
+function Header({ user, profile, onLogout }) {
     return (
         <nav className="navbar bg-dark border-bottom border-bottom-dark" data-bs-theme="dark">
             <div className="container-fluid px-3 my-2 d-flex justify-content-between align-items-center">
@@ -28,9 +27,10 @@ function Header({ user, profile }) {
                         />
                         <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
                             <li><a className="dropdown-item" href="#settings">ユーザー設定</a></li>
+                            <li><hr className="dropdown-divider" /></li>
+                            <li><button className="dropdown-item text-danger" onClick={onLogout}>ログアウト</button></li>
                         </ul>
                     </div>
-                    
                 )}
             </div>
         </nav>

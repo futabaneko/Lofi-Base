@@ -3,6 +3,15 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
+const escapeHTML = (str) => {
+  const div = document.createElement("div");
+  if (str) {
+    div.innerText = str;
+    div.textContent = str;
+  }
+  return div.innerHTML;
+};
+
 export default function ProfileSetup({ user, onSubmit }) {
   const [userName, setUserName] = useState("");
   const [userID, setUserId] = useState("");
@@ -52,13 +61,14 @@ export default function ProfileSetup({ user, onSubmit }) {
     }
   
     try {
-      // IDの重複チェック
+      // IDの重複チェック（大文字小文字を区別しない）
+      const lowerCaseUserID = userID.toLowerCase();
       const q = query(
         collection(db, "users"),
-        where("userID", "==", userID)
+        where("userID", "==", lowerCaseUserID)
       );
       const querySnapshot = await getDocs(q);
-  
+
       // 自分以外に同じIDがある場合はエラー
       const isDuplicate = querySnapshot.docs.some(
         (docSnap) => docSnap.id !== user.uid
@@ -72,19 +82,23 @@ export default function ProfileSetup({ user, onSubmit }) {
         return;
       }
   
+      // ユーザー名をエスケープ（HTMLタグを無害化）
+      const safeUserName = escapeHTML(userName);
+
       // タグを配列に変換
       const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
 
       // 保存処理
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, {
-        userName,
-        userID: userID,
+        userName: safeUserName, // エスケープしたユーザー名を保存
+        userID: lowerCaseUserID, // 小文字に統一したIDを保存
         photoURL: user.photoURL ?? null,
+        totalTime: 0,
         tags: tagArray,  // タグを保存
         createdAt: serverTimestamp(),
       });
-      onSubmit({ ...user, userName, userID, tags: tagArray });
+      onSubmit({ ...user, userName: safeUserName, userID: lowerCaseUserID, tags: tagArray });
     } catch (error) {
       console.error("Firestoreへの保存エラー:", error.code, error.message);
       alert("保存中にエラーが発生しました: " + error.message);

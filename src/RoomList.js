@@ -56,7 +56,7 @@ function RoomList({ user }) {
         await setDoc(doc(db, 'rooms', roomId, 'members', user.uid), {
           isInRoom: true,
           isWorking: false,
-          totalStudyTime: 0,
+          totalTime: 0,
           currentTask: "",
           joinedAt: serverTimestamp(),
         });

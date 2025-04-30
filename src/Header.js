@@ -26,7 +26,7 @@ function Header({ user, profile, onLogout }) {
                             aria-expanded="false"
                         />
                         <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-                            <li><a className="dropdown-item" href="#settings">ユーザー設定</a></li>
+                            <li><a className="dropdown-item" href="profile-settings">ユーザー設定</a></li>
                             <li><hr className="dropdown-divider" /></li>
                             <li><button className="dropdown-item text-danger" onClick={onLogout}>ログアウト</button></li>
                         </ul>

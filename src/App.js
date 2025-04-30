@@ -11,6 +11,7 @@ import Header from "./Header";
 import RoomList from "./RoomList";
 import CreateRoom from "./CreateRoom";
 import Room from "./Room";
+import ProfileSettings from "./ProfileSettings";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -111,6 +112,7 @@ function App() {
         <Route path="/" element={<RoomList user={user} />} />
         <Route path="/create-room" element={<CreateRoom user={user} />} />
         <Route path="/rooms/:id" element={<Room user={user} />} />
+        <Route path="/profile-settings" element={<ProfileSettings user={user} />} />
       </Routes>
     </div>
   );

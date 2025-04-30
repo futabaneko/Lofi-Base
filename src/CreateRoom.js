@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db } from './firebase';
-import { collection, addDoc, setDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
 function CreateRoom({ user }) {
@@ -31,7 +31,7 @@ function CreateRoom({ user }) {
             const userInfo = await getUserInfo(user.uid);
 
             if (userInfo) {
-            const roomRef = await addDoc(collection(db, 'rooms'), {
+            await addDoc(collection(db, 'rooms'), {
                 roomName,
                 isPrivate,
                 maxMembers,

@@ -21,6 +21,7 @@ export default function Login({ onLogin }) {
   return (
     <div className="text-center mt-5">
       <h2>Welcome to Lofi-Base!</h2>
+      <p>誰でも簡単に使用できる、オンライン自習室です</p>
       <button className="btn btn-primary mt-3" onClick={handleLogin}>
         Login with Google
       </button>

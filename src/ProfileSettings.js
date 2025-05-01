@@ -8,10 +8,10 @@ export default function ProfileSettings({ user }) {
   const [userID, setUserID] = useState("");
   const [tags, setTags] = useState("");
   const [photoURL, setPhotoURL] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false)
   const [totalTime, setTotalTime] = useState(0);
   const [errors, setErrors] = useState({ userName: "", userID: "", tags: "" });
   const [loading, setLoading] = useState(true);
-
 
   useEffect(() => {
     // Firebaseからユーザー情報を取得
@@ -27,6 +27,7 @@ export default function ProfileSettings({ user }) {
           setTags(userData.tags?.join(", ") || "");
           setPhotoURL(userData.photoURL || "");
           setTotalTime(userData.totalTime || 0);
+          setIsAdmin(userData.isAdmin);
         }
       } catch (error) {
         console.error("ユーザー情報の取得エラー:", error);
@@ -84,6 +85,7 @@ export default function ProfileSettings({ user }) {
         userID: userID.toLowerCase(),  // 小文字に変換
         photoURL,
         totalTime: totalTime,
+        isAdmin: isAdmin,
         tags: tagArray,
         updatedAt: serverTimestamp(),
       });
@@ -154,6 +156,9 @@ export default function ProfileSettings({ user }) {
           更新
         </button>
       </form>
+      <a href="/" className="btn btn-secondary mt-2">
+        メインページに戻る
+      </a>
     </div>
   );
 }

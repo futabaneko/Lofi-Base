@@ -8,6 +8,8 @@ function CreateRoom({ user }) {
     const [roomName, setRoomName] = useState('');
     const [isPrivate, setIsPrivate] = useState(false);
     const [maxMembers, setMaxMembers] = useState(8); // 最大人数（初期値は8人）
+    const [password, setPassword] = useState('');
+
     const navigate = useNavigate();
 
     const getUserInfo = async (uid) => {
@@ -30,16 +32,22 @@ function CreateRoom({ user }) {
         try {
             const userInfo = await getUserInfo(user.uid);
 
-            if (userInfo) {
-            await addDoc(collection(db, 'rooms'), {
-                roomName,
-                isPrivate,
-                maxMembers,
-                nowMembers: 0,
-                creatorID: user.uid,
-                createdAt: serverTimestamp(),
-            });
+            if (isPrivate && password == '') {
+                console.log("パスワードを設定して下さい");
+                return;
+            }
 
+            if (userInfo) {
+                await addDoc(collection(db, 'rooms'), {
+                    roomName,
+                    isPrivate,
+                    maxMembers,
+                    nowMembers: 0,
+                    creatorID: user.uid,
+                    createdAt: serverTimestamp(),
+                    password: isPrivate ? password : ''
+                });
+                  
             // 自分を参加させる場合の処理（参考！）
             // await setDoc(doc(db, 'rooms', roomRef.id, 'participants', user.uid), {
             //     userID: userInfo.userID,
@@ -98,6 +106,19 @@ function CreateRoom({ user }) {
                         秘密基地にする（パスワード機能は後で追加予定）
                     </label>
                 </div>
+                {isPrivate && (
+                <div className="mb-3">
+                    <label htmlFor="roomPassword" className="form-label">入室パスワード</label>
+                    <input
+                    type="password"
+                    className="form-control"
+                    id="roomPassword"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required={isPrivate}
+                    />
+                </div>
+                )}
                 <button type="submit" className="btn btn-primary w-100">作成</button>
             </form>
         </div>

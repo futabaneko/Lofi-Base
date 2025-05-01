@@ -91,11 +91,12 @@ export default function ProfileSetup({ user, onSubmit }) {
       // 保存処理
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, {
-        userName: safeUserName, // エスケープしたユーザー名を保存
-        userID: lowerCaseUserID, // 小文字に統一したIDを保存
+        userName: safeUserName,
+        userID: lowerCaseUserID,
         photoURL: user.photoURL ?? null,
         totalTime: 0,
-        tags: tagArray,  // タグを保存
+        isAdmin: false,
+        tags: tagArray,
         createdAt: serverTimestamp(),
       });
       onSubmit({ ...user, userName: safeUserName, userID: lowerCaseUserID, tags: tagArray });

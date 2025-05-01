@@ -69,7 +69,7 @@ function UserCard({ userID }) {
   if (!userInfo) return null;
 
   return (
-    <div className="card p-3" style={{ width: '200px', position: 'relative' }}>
+  <div className="card p-3" style={{ minWidth: '200px', maxWidth: '100%', position: 'relative' }}>
       <div className="d-flex align-items-center">
         <img
           src={userInfo.photoURL}
@@ -78,25 +78,26 @@ function UserCard({ userID }) {
           style={{ width: '50px', height: '50px' }}
         />
         <div>
-          <h5 className="mb-1">{userInfo.userName}</h5>
-          <small className="text-muted">@{userInfo.userID}</small>
+        <h5 className="mb-1 me-2">{userInfo.userName}</h5>
+        <small className="text-muted">@{userInfo.userID}</small>
         </div>
       </div>
       <hr />
-      <div>
-        <small>🕐累計作業時間 {formatSecondsToHMS(userInfo.totalTime ?? 0)}</small>
-      </div>
-      <div>
-        <small>
-          🕐週間作業時間{" "}{weeklyWorkTime !== null ? formatSecondsToHMS(weeklyWorkTime) : "読み込み中..."}
-        </small>
+      <h6 className="fw-bold mb-2">📒 作業記録</h6>
+      <div className="mb-2">
+        <small>🕐 累計作業時間 {formatSecondsToHMS(userInfo.totalTime ?? 0)}</small><br />
+        <small>🕐 週間作業時間 {weeklyWorkTime !== null ? formatSecondsToHMS(weeklyWorkTime) : "読み込み中..."}</small>
       </div>
 
-      <hr />
-      <div className="">
-        {userInfo.tags && userInfo.tags.length > 0 && (
+      <hr className="my-2" />
+      <h6 className="fw-bold mb-2">🏷️ タグ一覧</h6>
+      <div>
+        {(userInfo.isAdmin || (userInfo.tags && userInfo.tags.length > 0)) && (
           <div className="d-flex flex-wrap">
-            {userInfo.tags.map((tag, index) => (
+            {userInfo.isAdmin && (
+              <span className="badge bg-danger me-1 mb-1">🛠️ Admin</span>
+            )}
+            {userInfo.tags?.map((tag, index) => (
               <span key={index} className="badge bg-primary me-1 mb-1">{tag}</span>
             ))}
           </div>

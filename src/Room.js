@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from './firebase';
-import { doc,updateDoc, getDoc, deleteField, collection, query, where, onSnapshot, increment, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, getDocs, deleteField, collection, query, where, onSnapshot, increment, setDoc, deleteDoc } from 'firebase/firestore';
 import { useParams, useNavigate } from 'react-router-dom';
 import UserCard from './UserCard';
 
@@ -14,6 +14,16 @@ function Room({ user }) {
   const [hoveredUserID, setHoveredUserID] = useState(null);
   const [now, setNow] = useState(new Date());
 
+  // 部屋が存在しているか確認
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'rooms', roomID), (docSnap) => {
+      if (!docSnap.exists()) {
+        alert("この部屋は削除されました。");
+        navigate('/');
+      }
+    });
+    return () => unsubscribe();
+  }, [roomID, navigate]);
 
   // リアルタイムで部屋とメンバーの情報を取得
   useEffect(() => {
@@ -71,97 +81,155 @@ function Room({ user }) {
   // 作業開始
   const handleStartWorking = async () => {
     try {
-      await updateDoc(doc(db, 'rooms', roomID, 'members', user.uid), {
-        isWorking: true,
-        workItem: workItem,
-        workStartTime: new Date(), // 勉強開始時間を記録
-      });
-    } catch (error) {
-      console.error("作業開始に失敗:", error);
-    }
-  };
-
-  // 休憩
-  const handleTakeBreak = async () => {
-    try {
       const memberRef = doc(db, 'rooms', roomID, 'members', user.uid);
       const memberSnap = await getDoc(memberRef);
-      const memberData = memberSnap.data();
 
-      if (!memberData.isWorking) {
-        alert("すでに休憩中です。");
+      if (!memberSnap.exists()) {
+        alert("ユーザー情報が見つかりませんでした。");
         return;
       }
 
+      const memberData = memberSnap.data();
+
+      if (!memberData.isWorking) {
+        await updateDoc(memberRef, {
+          isWorking: true,
+          workItem: workItem,
+          workStartTime: new Date(),
+        });
+      } else {
+        alert("すでに作業中です。\n（内容を更新したい際は、一度休憩ボタンを押してから再実行してください。）");
+      }
+
+    } catch (error) {
+      console.error("作業開始に失敗:", error);
+      alert("作業開始中にエラーが発生しました。");
+    }
+  };
+
+
+  // 休憩
+  const handleTakeBreak = () => takeBreak(user.uid);
+
+  const takeBreak = async (uid) => {
+    try {
+      const memberRef = doc(db, 'rooms', roomID, 'members', uid);
+      const memberSnap = await getDoc(memberRef);
+      const memberData = memberSnap.data();
+  
+      if (!memberData.isWorking) return;
+  
       const startTime = memberData.workStartTime?.toDate?.() ?? new Date();
       const now = new Date();
       const elapsedSeconds = Math.floor((now - startTime) / 1000);
-
-      // 時間加算と状態更新
+  
       await updateDoc(memberRef, {
         isWorking: false,
         workItem: "",
-        totalTime: increment(elapsedSeconds),
         workStartTime: deleteField(),
-      });
-
-      // users/{uid} に全体記録（全期間累計）
-      await updateDoc(doc(db, 'users', user.uid), {
         totalTime: increment(elapsedSeconds),
       });
-
-
-      // users/{uid}/weeklyLogs/{日付} に記録
+  
+      await updateDoc(doc(db, 'users', uid), {
+        totalTime: increment(elapsedSeconds),
+      });
+  
       const todayStr = now.toISOString().split('T')[0];
-      const userDailyRef = doc(db, 'users', user.uid, 'dailyLogs', todayStr);
+      const userDailyRef = doc(db, 'users', uid, 'dailyLogs', todayStr);
       await setDoc(userDailyRef, {
         totalTime: increment(elapsedSeconds),
       }, { merge: true });
-
+  
     } catch (error) {
-      console.error("休憩に失敗:", error);
+      console.error(`ユーザー ${uid} の休憩に失敗:`, error);
     }
   };
 
-  // 退出処理
+  // 退出
   const handleLeaveRoom = async () => {
-
+    await leaveRoom(user.uid, roomID);
+    navigate('/');
+  };
+  
+  const leaveRoom = async (uid, roomID) => {
     try {
-      const memberRef = doc(db, 'rooms', roomID, 'members', user.uid);
+      const memberRef = doc(db, 'rooms', roomID, 'members', uid);
       const memberSnap = await getDoc(memberRef);
       const memberData = memberSnap.data();
-
+  
       if (memberData.isWorking) {
-        await handleTakeBreak();
-      };
-    
-    } catch (error) {
-      console.log("退出処理にて休憩に失敗しました")
-    }
-
-    try {
-      const roomRef = doc(db, 'rooms', roomID);
-      const roomDoc = await getDoc(roomRef);
-      const nowMembers = roomDoc.data().nowMembers;
-
-      await updateDoc(roomRef, {
-        nowMembers: nowMembers - 1,
-      });
-
-      await updateDoc(doc(db, 'rooms', roomID, 'members', user.uid), {
+        await takeBreak(uid);
+      }
+  
+      await updateDoc(memberRef, {
         isInRoom: false,
         isWorking: false,
       });
-
-      await updateDoc(doc(db, 'users', user.uid), {
+  
+      await updateDoc(doc(db, 'users', uid), {
         currentRoomID: deleteField(),
       });
+  
+      const roomRef = doc(db, 'rooms', roomID);
+      const roomSnap = await getDoc(roomRef);
 
-      navigate(`/`);
+      if (!roomSnap.exists()) {
+        console.warn(`部屋 ${roomID} が存在しません（すでに削除された可能性があります）`);
+        return;
+      }
+
+      const nowMembers = roomSnap.data().nowMembers ?? 1;
+      
+      await updateDoc(roomRef, {
+        nowMembers: nowMembers > 0 ? nowMembers - 1 : 0,
+      });
+      
+  
+      await updateDoc(roomRef, {
+        nowMembers: nowMembers > 0 ? nowMembers - 1 : 0,
+      });
+  
     } catch (error) {
-      console.error("部屋から退出できません:", error);
+      console.error(`ユーザー ${uid} の退出処理に失敗:`, error);
     }
   };
+  
+
+  // 部屋削除処理
+  const handleDeleteRoom = async () => {
+    if (roomData?.creatorID === user.uid) {
+      
+      try {
+        // 参加している全ユーザーを退出処理
+        const membersRef = collection(db, 'rooms', roomID, 'members');
+        const membersSnapshot = await getDocs(membersRef);
+
+        // 退出処理をPromise.allで待機
+        const leavePromises = membersSnapshot.docs.map(async (docSnap) => {
+          const memberID = docSnap.id;
+          await leaveRoom(memberID, roomID);
+          navigate('/');
+        });
+
+        await Promise.all(leavePromises);
+
+        // データの削除
+        await deleteDoc(doc(db, 'rooms', roomID));
+
+        membersSnapshot.docs.map((docSnap) => {
+          return deleteDoc(doc(db, 'rooms', roomID, 'members', docSnap.id));
+        });
+
+        navigate('/');
+        
+      } catch (error) {
+        console.error("部屋削除に失敗:", error);
+      }
+    } else {
+      alert("部屋を削除する権限がありません。");
+    }
+  };
+
 
   // Hoverのための初期化
   useEffect(() => {
@@ -245,6 +313,10 @@ function Room({ user }) {
 
       <hr />
       <button className="btn btn-danger" onClick={handleLeaveRoom}>部屋を退出</button>
+
+      {roomData?.creatorID === user.uid && (
+        <button className="btn btn-danger mx-2" onClick={handleDeleteRoom}>部屋を削除</button>
+      )}
     </div>
   );
 }

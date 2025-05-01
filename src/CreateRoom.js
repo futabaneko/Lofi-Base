@@ -32,7 +32,7 @@ function CreateRoom({ user }) {
         try {
             const userInfo = await getUserInfo(user.uid);
 
-            if (isPrivate && password == '') {
+            if (isPrivate && password === '') {
                 console.log("パスワードを設定して下さい");
                 return;
             }
@@ -103,7 +103,7 @@ function CreateRoom({ user }) {
                         onChange={(e) => setIsPrivate(e.target.checked)}
                     />
                     <label className="form-check-label" htmlFor="privateRoom">
-                        秘密基地にする（パスワード機能は後で追加予定）
+                        秘密基地にする
                     </label>
                 </div>
                 {isPrivate && (

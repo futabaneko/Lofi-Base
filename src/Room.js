@@ -241,8 +241,15 @@ function Room({ user }) {
   
   return (
     <div className="container py-4">
-      <h2>部屋名: {roomData?.roomName ?? '読み込み中...'}</h2>
-      <p>現在の人数: {roomData?.nowMembers ?? '読み込み中...'}</p>
+      <h2>{roomData?.roomName ?? '読み込み中...'}</h2>
+
+      <label>
+        {!roomData?.isPrivate && <span className="ms-2 badge bg-success">🔓 公開</span>}
+        {roomData?.isPrivate && <span className="ms-2 badge bg-secondary">🔒 秘密基地</span>}
+      </label>
+
+      <p>人数: {roomData?.nowMembers ?? '読み込み中...'} / {roomData?.maxMembers ?? '読み込み中...'}</p>
+      <small>作成者ID: {roomData?.creatorID ?? '読み込み中...'} / 部屋ID: {roomID ?? '読み込み中...'}</small>
       <hr />
       <h4>メンバー一覧</h4>
       <ul className="list-group mb-4">

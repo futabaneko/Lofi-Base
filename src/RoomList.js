@@ -65,33 +65,51 @@ function RoomList({ user }) {
     }
   };
 
-  // 入室処理・本体
-  const enterRoom = async (roomDoc, roomId) => {
-    const nowMembers = roomDoc.data().nowMembers;
+// 入室処理・本体
+const enterRoom = async (roomDoc, roomId) => {
+  const nowMembers = roomDoc.data().nowMembers;
+
+  if (nowMembers >= roomDoc.data().maxMembers) {
+    alert('この部屋は満員です。');
+    return;
+  }
+
+  // 部屋の現在のメンバー数を更新
+  await updateDoc(doc(db, 'rooms', roomId), {
+    nowMembers: nowMembers + 1,
+  });
+
+  // ユーザーが既に部屋に入っているかどうか確認
+  const userDocRef = doc(db, 'rooms', roomId, 'members', user.uid);
+  const userDoc = await getDoc(userDocRef);
   
-    if (nowMembers >= roomDoc.data().maxMembers) {
-      alert('この部屋は満員です。');
-      return;
-    }
-  
-    await updateDoc(doc(db, 'rooms', roomId), {
-      nowMembers: nowMembers + 1,
+  // 2回目以降
+  if (userDoc.exists()) {
+    await updateDoc(userDocRef, {
+      isInRoom: true,
+      isWorking: false,
+      joinedAt: serverTimestamp(),
     });
-  
-    await setDoc(doc(db, 'rooms', roomId, 'members', user.uid), {
+
+  // 初回
+  } else {
+    await setDoc(userDocRef, {
       isInRoom: true,
       isWorking: false,
       totalTime: 0,
       currentTask: '',
       joinedAt: serverTimestamp(),
     });
-  
-    await updateDoc(doc(db, 'users', user.uid), {
-      currentRoomID: roomId,
-    });
-  
-    navigate(`/rooms/${roomId}`);
-  };
+  }
+
+  // ユーザーの現在の部屋情報を更新
+  await updateDoc(doc(db, 'users', user.uid), {
+    currentRoomID: roomId,
+  });
+
+  // 部屋ページに遷移
+  navigate(`/rooms/${roomId}`);
+};
   
   // パスワード確認
   const handlePasswordSubmit = async () => {

@@ -251,6 +251,43 @@ function Room({ user }) {
       <p>人数: {roomData?.nowMembers ?? '読み込み中...'} / {roomData?.maxMembers ?? '読み込み中...'}</p>
       <small>作成者ID: {roomData?.creatorID ?? '読み込み中...'} / 部屋ID: {roomID ?? '読み込み中...'}</small>
       <hr />
+
+
+      <div className="my-4 p-4 bg-light rounded shadow text-center">
+        <div className="display-4 fw-bold mb-2" style={{ fontSize: '3rem' }}>
+          {
+            (() => {
+              const member = members.find(m => m.uid === user.uid);
+              if (!member) return '---';
+              const total = member.totalTime ?? 0;
+              if (member.isWorking) {
+                const start = member.workStartTime?.toDate?.() ?? new Date();
+                const elapsed = Math.floor((now - start) / 1000);
+                return formatSecondsToHMS(total + elapsed);
+              } else {
+                return formatSecondsToHMS(total);
+              }
+            })()
+          }
+        </div>
+
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control text-center"
+            placeholder="作業内容を入力"
+            value={workItem}
+            onChange={(e) => setworkItem(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <button className="btn btn-primary me-2" onClick={handleStartWorking}>作業開始</button>
+          <button className="btn btn-secondary" onClick={handleTakeBreak}>休憩</button>
+        </div>
+      </div>
+      
+      <hr />
       <h4>メンバー一覧</h4>
       <ul className="list-group mb-4">
         <li className="list-group-item list-group-item-action position-relative">
@@ -303,20 +340,6 @@ function Room({ user }) {
           </li>
         ))}
       </ul>
-
-      <div className="mb-3">
-        <label htmlFor="workItem" className="form-label">現在の作業内容</label>
-        <input
-          type="text"
-          id="workItem"
-          className="form-control"
-          value={workItem}
-          onChange={(e) => setworkItem(e.target.value)}
-        />
-      </div>
-
-      <button className="btn btn-primary me-2" onClick={handleStartWorking}>作業開始</button>
-      <button className="btn btn-secondary me-2" onClick={handleTakeBreak}>休憩</button>
 
       <hr />
       <button className="btn btn-danger" onClick={handleLeaveRoom}>部屋を退出</button>

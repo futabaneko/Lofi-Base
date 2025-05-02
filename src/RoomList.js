@@ -13,6 +13,7 @@ function RoomList({ user }) {
   const [passwordInput, setPasswordInput] = useState('');
   const navigate = useNavigate();
 
+  // リストの取得
   useEffect(() => {
     const q = query(collection(db, 'rooms'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {

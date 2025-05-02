@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { doc, updateDoc, getDoc, getDocs, deleteField, collection, query, where, onSnapshot, increment, setDoc, deleteDoc } from 'firebase/firestore';
 import { useParams, useNavigate } from 'react-router-dom';
 import UserCard from './UserCard';
+import useFocusTimer from './lib/useFocusTimer'
 
 function Room({ user }) {
   const navigate = useNavigate();
@@ -14,6 +15,13 @@ function Room({ user }) {
   const [hoveredUserID, setHoveredUserID] = useState(null);
   const [now, setNow] = useState(new Date());
 
+  // イベントリスナー
+  useFocusTimer({
+    onLeave: () => console.log("離席（hidden）"),
+    onReturn: () => console.log("復帰（visible）"),
+    onUnload: () => console.log("シャットダウンまたはページ離脱"),
+  });
+  
   // 部屋が存在しているか確認
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'rooms', roomID), (docSnap) => {

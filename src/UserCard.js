@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { formatSecondsToHMS } from './lib/tools'
 
 function UserCard({ userID }) {
   const [userInfo, setUserInfo] = useState(null);
@@ -28,13 +29,6 @@ function UserCard({ userID }) {
       fetchUserInfo();
     }
   }, [userID]);
-
-  function formatSecondsToHMS(seconds) {
-    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  }
 
   async function getWeeklyWorkTime(uid) {
     const now = new Date();

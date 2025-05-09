@@ -300,10 +300,10 @@ function Room({ user }) {
       <ul className="list-group mb-4">
         <li className="list-group-item list-group-item-action position-relative">
           <div className="row align-items-center">
-            <div className="col-1 text-center">状態</div>
-            <div className="col-2"><strong>ユーザー名</strong></div>
+            <div className="col-2 text-center">状態</div>
+            <div className="col-3"><strong>ユーザー名</strong></div>
             <div className="col-4">内容</div>
-            <div className="col-4">累計時間</div>
+            <div className="col-3">累計時間</div>
           </div>
         </li>
 
@@ -311,13 +311,13 @@ function Room({ user }) {
           <li key={member.uid} className="list-group-item list-group-item-action position-relative">
             <div className="row align-items-center">
               <div
-                className="col-1 text-center"
+                className="col-2 text-center"
                 data-bs-toggle="tooltip"
                 title={member.isWorking ? '作業中' : '休憩中'}
               >
                 {member.isWorking ? '🌞' : '🌙'}
               </div>
-              <div className="col-2">
+              <div className="col-3">
                 <strong
                   onMouseEnter={() => setHoveredUserID(member.uid)}
                   onMouseLeave={() => setHoveredUserID(null)}
@@ -332,7 +332,7 @@ function Room({ user }) {
                 )}
               </div>
               <div className="col-4">{member.workItem}</div>
-              <div className="col-4">
+              <div className="col-3">
                 {(() => {
                   const total = member.totalTime ?? 0;
                   if (member.isWorking) {

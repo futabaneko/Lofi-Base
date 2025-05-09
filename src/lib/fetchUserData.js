@@ -1,5 +1,5 @@
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "../firebase";
 
 export async function fetchUserData(uid) {
   const docRef = doc(db, "users", uid);
